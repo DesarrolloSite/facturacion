@@ -1,24 +1,14 @@
 {
-    "name": "digitalsite/facturacion",
-    "description": "Control Estadistico",
+    "name": "digitalsitesas/facturacion",
+    "description": "Módulo facturacion",
+    "type": "project",
     "license": "MIT",
     "authors": [
         {
-            "name": "sitedigital",
-            "email": "info@sitedigital.com.co"
+            "name": "SiteDigital",
+            "email": "admin@sitedigital.com.co"
         }
     ],
-     "autoload": {
-
-        "psr-4": {
-            "Digitalsite\\Facturacion\\": "src/"
-        }
-
-    },
-    "minimum-stability": "stable",
-    "require": {
-
-         "illuminate/support": "~5"
-
-    }
+    "minimum-stability": "dev",
+    "require": {}
 }
