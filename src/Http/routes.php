@@ -45,6 +45,12 @@ Route::get('gestion/factura/crear-facturacion/{id}', 'DigitalsiteSaaS\Facturacio
 Route::get('gestion/factura/eliminar-gasto/{id}', 'DigitalsiteSaaS\Facturacion\Http\FacturacionController@eliminargasto');
 Route::get('gestion/factura/editar-gasto/{id}', 'DigitalsiteSaaS\Facturacion\Http\FacturacionController@editargasto');
 Route::post('gestion/factura/actualizargasto/{id}', 'DigitalsiteSaaS\Facturacion\Http\FacturacionController@actualizargasto');
+Route::get('Facturacione/{id}', 'DigitalsiteSaaS\Facturacion\Http\FacturacionController@facturacione');
+Route::get('Facturacione/{id}/ajax-subcat', 'DigitalsiteSaaS\Facturacion\Http\FacturacionController@facturacioneajax');
+Route::post('productos/create', 'DigitalsiteSaaS\Facturacion\Http\FacturacionController@creaproduct');
+Route::post('productos/update/{id}', 'DigitalsiteSaaS\Facturacion\Http\FacturacionController@proupdate');
+Route::post('informe/generalgasto', 'DigitalsiteSaaS\Facturacion\Http\FacturacionController@generalgasto');
+
 
 Route::get('gestion/factura/informe', function()
 {
@@ -69,105 +75,7 @@ Route::get('informe/cliente/{id}', function($id) {
 });
 
 
-Route::post('informe/general', function(){
-       
-       $min_price = Input::has('min_price') ? Input::get('min_price') : 0;
-       $max_price = Input::has('max_price') ? Input::get('max_price') : 10000000;
-       $clientes =  Input::get('cliente') ;
-       $estados =  Input::get('estado') ;
-   
-       $users = DB::table('clientes')
-         ->join('facturas', 'clientes.id', '=', 'facturas.cliente_id')
-         ->whereBetween('f_emision', array($min_price, $max_price))
-         ->where('cliente_id', 'like', '%' . $clientes . '%')
-         ->where('estadof', 'like', '%' . $estados . '%')
-         ->get();
 
-         $unitarios =  $productos = DB::table('productos')
-        ->join('facturas', 'productos.factura_id', '=', 'facturas.id')
-        ->whereBetween('f_emision', array($min_price, $max_price))
-         ->where('cliente_id', 'like', '%' . $clientes . '%')
-         ->where('estadof', 'like', '%' . $estados . '%')
-          ->selectRaw('sum(v_total) as sum')
-          ->selectRaw('sum(masiva) as sumiva')
-          ->selectRaw('sum(rtefte) as rtefte')
-          ->selectRaw('sum(rteica) as rteica')
-          ->selectRaw('factura_id as mus')
-          ->groupBy('factura_id')
-          ->get();
-
-
-         $total = DB::table('productos')
-         ->join('facturas', 'productos.factura_id', '=', 'facturas.id')
-         ->whereBetween('f_emision', array($min_price, $max_price))
-         ->where('cliente_id', 'like', '%' . $clientes . '%')
-         ->where('estadof', 'like', '%' . $estados . '%')
-         
-         ->sum('v_total');
-
-          $iva = DB::table('productos')
-         ->join('facturas', 'productos.factura_id', '=', 'facturas.id')
-         ->whereBetween('f_emision', array($min_price, $max_price))
-         ->where('cliente_id', 'like', '%' . $clientes . '%')
-         ->where('estadof', 'like', '%' . $estados . '%')
-         
-         ->sum('costoiva');
-
-         $fuente = DB::table('productos')
-         ->join('facturas', 'productos.factura_id', '=', 'facturas.id')
-         ->whereBetween('f_emision', array($min_price, $max_price))
-         ->where('cliente_id', 'like', '%' . $clientes . '%')
-         ->where('estadof', 'like', '%' . $estados . '%')
-         
-         ->sum('rtefte');
-
-         $ica = DB::table('productos')
-         ->join('facturas', 'productos.factura_id', '=', 'facturas.id')
-         ->whereBetween('f_emision', array($min_price, $max_price))
-         ->where('cliente_id', 'like', '%' . $clientes . '%')
-         ->where('estadof', 'like', '%' . $estados . '%')
-         ->sum('rteica');
-
-         $productos = DB::table('productos')
-        ->join('facturas', 'productos.factura_id', '=', 'facturas.id')
-        ->whereBetween('f_emision', array($min_price, $max_price))
-         ->where('cliente_id', 'like', '%' . $clientes . '%')
-         ->where('estadof', 'like', '%' . $estados . '%')
-          ->selectRaw('sum(v_total) as sum')
-          ->selectRaw('sum(masiva) as masiva')
-          ->selectRaw('sum(rtefte) as rtefte')
-          ->selectRaw('sum(rteica) as rteica')
-          ->selectRaw('cliente_id as mus')
-          ->groupBy('cliente_id')
-          ->get();
-
-          $empresa = DB::table('empresas')->where('id', 1)->get();
-
-            $conteo = DB::table('clientes')
-        ->join('facturas', 'clientes.id', '=', 'facturas.cliente_id')
-        ->whereBetween('f_emision', array($min_price, $max_price))
-         ->where('cliente_id', 'like', '%' . $clientes . '%')
-         ->where('estadof', 'like', '%' . $estados . '%')
-          ->selectRaw('count(cliente_id) as sum')
-          ->selectRaw('cliente_id as mus')
-          ->groupBy('cliente_id')
-          ->get();
-
-          $facturas = DB::table('facturas')->count();
-          $cuentas = DB::table('productos')
-          ->get();
-
-          $prefijo = DigitalsiteSaaS\Facturacion\Empresa::find(1);
-
-        $clientes = DB::table('clientes')->get();
-
-        $pdf = app('dompdf.wrapper');
-        $pdf->getDomPDF()->set_option("enable_php", true);
-        
-      $pdf = PDF::loadView('facturacion::informefac', compact('users', 'clientes', 'total', 'empresa', 'iva', 'fuente', 'ica', 'productos', 'facturas', 'conteo', 'prefijo', 'min_price', 'max_price', 'unitarios'));
-        $pdf->setPaper('A4', 'landscape');
-      return  $pdf->stream();
-});
 
 
 Route::get('informe/generar-informe', function(){
@@ -184,52 +92,7 @@ Route::get('informe/generar-informacion', function(){
 
 
 
-  Route::post('/productos/create', function(App\Http\Requests\AlmacenCreateRequest $Request){
 
-$category = DigitalsiteSaaS\Facturacion\Category::create([
-	'producto' => Input::get('producto'),
-  'identificador' => Input::get('identificador')
-
-	]);
-
-
-$subcategory = new DigitalsiteSaaS\Facturacion\Subcategory([
-	'iva' => Input::get('iva'),
-	'identificador' => Input::get('identificador'),
-	'precio' => Input::get('precio'),
-	'producto' => Input::get('producto'),
-
-
-
-	]);
-$category->subcategories()->save($subcategory);
-
-return Redirect('gestion/factura/crear-producto')->with('status', 'ok_create');
-
-	});
-
-
-
-
-
-  Route::post('/productos/update/{id}', function($id, App\Http\Requests\AlmacenUpdateRequest $request){
-
-
-DB::table('categories')
-            ->where('id', $id)
-            ->update(array('producto' => Input::get('producto'),'identificador' => Input::get('identificador')));
-
-DB::table('subcategories')
-            ->where('category_id', $id)
-            ->update(array('iva' => Input::get('iva'),'identificador' => Input::get('identificador'),'precio' => Input::get('precio'),'producto' => Input::get('producto')));
-
-
-
-
-
-return Redirect('gestion/factura/crear-producto')->with('status', 'ok_create');
-
-	});
 
 
 Route::get('darioma/pdf', function() {
@@ -240,14 +103,7 @@ Route::get('darioma/pdf', function() {
 	);
 
 
- Route::get('Facturacione/{id}/ajax-subcat', function($id){
 
-	$cat_id = Input::get('cat_id');
-
-	$subcategories = DigitalsiteSaaS\Facturacion\Subcategory::where('category_id', '=', $cat_id)->get();
-
-	return Response::json($subcategories);
-});
 
 Route::get('indexa', function(){
 
@@ -256,55 +112,8 @@ return View::make('indexa');
 
 
 
- Route::get('Facturacione/{id}',function($id)
-{
-$facturacion = DigitalsiteSaaS\Facturacion\Factura::find($id)->Productos;
-		$contenido = DigitalsiteSaaS\Facturacion\Factura::find($id);
-		$categories = DigitalsiteSaaS\Facturacion\Category::all();
-		$product = DigitalsiteSaaS\Facturacion\Almacen::Orderby('id', 'desc')->take(10)->pluck('producto','id');
-		$retefuente = DB::table('facturas')->join('clientes','clientes.id','=','facturas.cliente_id')->where('facturas.id', '=', $id)->get();
-	    return View::make('facturacion::crear_producto')->with('retefuente', $retefuente)->with('facturacion', $facturacion)->with('contenido', $contenido)->with('product', $product)->with('categories', $categories);
-});
 
 
-
- Route::post('informe/generalgasto', function(){
-       
-        $min_price = Input::has('min_price') ? Input::get('min_price') : 0;
-       $max_price = Input::has('max_price') ? Input::get('max_price') : 10000;
-
-       $unitarios  = DB::table('gastos')
-          ->whereBetween('fecha', array($min_price, $max_price))
-          ->selectRaw('sum(valor) as valor')
-          ->selectRaw('sum(valornogra) as valornogra')
-          ->selectRaw('sum(iva) as iva')
-          ->selectRaw('sum(impuesto) as impuesto')
-          ->selectRaw('sum(valorfac) as valorfac')
-          ->selectRaw('sum(retefuente) as retefuente')
-          ->selectRaw('sum(reteica) as reteica')
-          ->selectRaw('sum(descuento) as descuento')
-          ->selectRaw('sum(totaldes) as totaldes')
-          ->selectRaw('sum(neto) as neto')
-          ->get();
-
-         $gastos = DB::table('gastos')
-          ->whereBetween('fecha', array($min_price, $max_price))
-          ->orderBy('mes')
-          ->get();
-
-         $prefijo = DigitalsiteSaaS\Facturacion\Empresa::find(1);
-
-           $resultados =  DB::table('gastos')
-          ->whereBetween('fecha', array($min_price, $max_price))
-          ->selectRaw('mes')
-          ->selectRaw('sum(neto) as valor')
-          ->groupBy('mes')
-          ->get();
-
-      
-        
-      return View::make('facturacion::informegastosweb', compact('clientes','unitarios','gastos','prefijo','resultados'));
-});
 
 
  Route::get('informe/prueba', function(){
